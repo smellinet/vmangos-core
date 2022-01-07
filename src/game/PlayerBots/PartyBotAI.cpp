@@ -34,7 +34,7 @@ enum PartyBotSpells
     PB_SPELL_DRINK = 1137,
     PB_SPELL_AUTO_SHOT = 75,
     PB_SPELL_SHOOT_WAND = 5019,
-    PB_SPELL_HONORLESS_TARGET = 2479,
+    PB_SPELL_HONORLESS_TARGET = 2479
 };
 
 #define PB_UPDATE_INTERVAL 1000
@@ -613,6 +613,7 @@ void PartyBotAI::UpdateAI(uint32 const diff)
                 me->ResurrectPlayer(0.5f);
                 me->SpawnCorpseBones();
                 me->CastSpell(me, PB_SPELL_HONORLESS_TARGET, true);
+                return;
             }
         }
         
@@ -651,7 +652,7 @@ void PartyBotAI::UpdateAI(uint32 const diff)
         }
 
         // Teleport to leader if too far away.
-        if (!me->IsWithinDistInMap(pLeader, 100.0f))
+        if ((pLeader->GetDeathState() == ALIVE || pLeader->GetDeathState() == CORPSE) && !me->IsWithinDistInMap(pLeader, 100.0f))
         {
             if (!me->IsStopped())
                 me->StopMoving();
@@ -730,7 +731,8 @@ void PartyBotAI::UpdateAI(uint32 const diff)
     {
         if (!pVictim)
         {
-            if (me->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
+            if ((pLeader->GetDeathState() == ALIVE || pLeader->GetDeathState() == CORPSE)
+                    && me->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE)
                 me->GetMotionMaster()->MoveFollow(pLeader, urand(PB_MIN_FOLLOW_DIST, PB_MAX_FOLLOW_DIST), frand(PB_MIN_FOLLOW_ANGLE, PB_MAX_FOLLOW_ANGLE));
         }
         else if (!isOnTransport)
@@ -1276,6 +1278,15 @@ void PartyBotAI::UpdateInCombatAI_Hunter()
 {
     if (Unit* pVictim = me->GetVictim())
     {
+        if (Pet* pPet = me->GetPet())
+        {
+            if (!pPet->GetVictim())
+            {
+                pPet->GetCharmInfo()->SetIsCommandAttack(true);
+                pPet->AI()->AttackStart(pVictim);
+            }
+        }
+
         if (me->GetMotionMaster()->GetCurrentMovementGeneratorType() == IDLE_MOTION_TYPE
             && me->GetDistance(pVictim) > 30.0f)
         {
@@ -1556,6 +1567,7 @@ void PartyBotAI::UpdateInCombatAI_Mage()
             }
         }
 
+        /*
         if (me->GetEnemyCountInRadiusAround(me, 10.0f) > 1)
         {
             if (m_spells.mage.pConeofCold && !me->IsMoving() &&
@@ -1578,7 +1590,7 @@ void PartyBotAI::UpdateInCombatAI_Mage()
                 if (DoCastSpell(me, m_spells.mage.pArcaneExplosion) == SPELL_CAST_OK)
                     return;
             }
-        }
+        }*/
 
         if (me->GetMotionMaster()->GetCurrentMovementGeneratorType() == DISTANCING_MOTION_TYPE)
             return;
@@ -1598,7 +1610,7 @@ void PartyBotAI::UpdateInCombatAI_Mage()
             if (DoCastSpell(me, m_spells.mage.pRemoveLesserCurse) == SPELL_CAST_OK)
                 return;
         }
-
+/*
         if (m_spells.mage.pBlizzard &&
            (me->GetEnemyCountInRadiusAround(pVictim, 10.0f) > 2) &&
             CanTryToCastSpell(pVictim, m_spells.mage.pBlizzard))
@@ -1606,7 +1618,7 @@ void PartyBotAI::UpdateInCombatAI_Mage()
             if (DoCastSpell(pVictim, m_spells.mage.pBlizzard) == SPELL_CAST_OK)
                 return;
         }
-
+*/
         if (m_spells.mage.pPolymorph)
         {
             if (Unit* pTarget = SelectAttackerDifferentFrom(pVictim))
@@ -2027,6 +2039,15 @@ void PartyBotAI::UpdateInCombatAI_Warlock()
 {
     if (Unit* pVictim = me->GetVictim())
     {
+        if (Pet* pPet = me->GetPet())
+        {
+            if (!pPet->GetVictim())
+            {
+                pPet->GetCharmInfo()->SetIsCommandAttack(true);
+                pPet->AI()->AttackStart(pVictim);
+            }
+        }
+        
         if (m_spells.warlock.pDeathCoil &&
            (pVictim->CanReachWithMeleeAutoAttack(me) || pVictim->IsNonMeleeSpellCasted()) &&
             CanTryToCastSpell(pVictim, m_spells.warlock.pDeathCoil))

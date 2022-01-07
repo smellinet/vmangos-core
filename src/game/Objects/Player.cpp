@@ -6513,6 +6513,15 @@ bool Player::SetPosition(float x, float y, float z, float orientation, bool tele
 
         if (positionChanged)
         {
+            if (teleport){
+                for (const auto& guid : m_visibleGUIDs)
+                {
+                    if (guid.IsPlayer()){
+                        Player* playerObserver = sObjectMgr.GetPlayer(guid);
+                        playerObserver->UpdateVisibilityOf(playerObserver, this);
+                    }
+                }
+            }
             // group update
             if (GetGroup() && (uint16(old_x) != uint16(x) || uint16(old_y) != uint16(y)))
                 SetGroupUpdateFlag(GROUP_UPDATE_FLAG_POSITION);
@@ -15531,7 +15540,10 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder* holder)
                 break;
         }
 
-        SetCheatGod(sWorld.getConfig(CONFIG_BOOL_GM_CHEAT_GOD));
+        if (IsGameMaster())
+        {
+            SetCheatGod(sWorld.getConfig(CONFIG_BOOL_GM_CHEAT_GOD));
+        }
     }
 
     if (extraflags & PLAYER_EXTRA_WHISP_RESTRICTION)

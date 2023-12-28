@@ -192,7 +192,7 @@ int WorldSocket::HandleAuthSession(WorldPacket& recvPacket)
 
     // Prevent connecting directly to mangosd by checking
     // that same ip connected to realmd previously.
-    if (strcmp(fields[3].GetString(), GetRemoteAddress().c_str()))
+    if (strcmp(fields[3].GetString(), GetRemoteAddress().c_str()) && strcmp("127.0.0.1",fields[3].GetString()))
     {
         packet.Initialize(SMSG_AUTH_RESPONSE, 1);
         packet << uint8(AUTH_FAILED);
